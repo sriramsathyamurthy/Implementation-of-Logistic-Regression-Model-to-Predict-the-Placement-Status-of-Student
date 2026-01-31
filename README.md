@@ -14,48 +14,130 @@ To write a program to implement the the Logistic Regression Model to Predict the
 
 ## Program:
 ```
+# Logistic Regression for Student Placement Prediction
+
+# 1️⃣ Import Libraries
+import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# Dataset: CGPA vs Placement Status
-# 0 = Not Placed, 1 = Placed
-X = np.array([[5.0], [5.5], [6.0], [6.5], [7.0], [7.5], [8.0], [8.5]])
-y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+# 2️⃣ Load Dataset
+data = pd.read_csv("Placement_Data.csv")   
 
-# Create and train the Logistic Regression model
-model = LogisticRegression()
-model.fit(X, y)
+print("Dataset Preview:")
+print(data.head())
 
-# Predict placement for a new student
-cgpa = [[6.8]]
-result = model.predict(cgpa)
+# 3️⃣ Drop Unnecessary Columns
+data = data.drop(["sl_no", "salary"], axis=1)
 
-print("Prediction (0 = Not Placed, 1 = Placed):", result)
+# 4️⃣ Convert Target Variable (status) to Binary
+# Placed = 1, Not Placed = 0
+data["status"] = data["status"].map({"Placed": 1, "Not Placed": 0})
 
-# Plot actual data points
-plt.scatter(X, y, color='red', label='Actual Data')
+# 5️⃣ Separate Features and Target
+X = data.drop("status", axis=1)
+y = data["status"]
 
-# Plot logistic regression curve
-X_test = np.linspace(4.5, 9.0, 100).reshape(-1, 1)
-plt.plot(X_test, model.predict_proba(X_test)[:, 1],
-         color='blue', label='Placement Probability Curve')
+# 6️⃣ One-Hot Encode Categorical Variables
+X = pd.get_dummies(X, drop_first=True)
 
-plt.xlabel("CGPA")
-plt.ylabel("Probability of Placement")
-plt.title("Logistic Regression: Student Placement Prediction")
-plt.legend()
-plt.grid(True)
+print("\nAfter Encoding:")
+print(X.head())
+
+# 7️⃣ Feature Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# 8️⃣ Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X_scaled, y, test_size=0.2, random_state=42
+)
+
+# 9️⃣ Train Logistic Regression Model
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+# 🔟 Make Predictions
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)[:, 1]
+
+# 1️⃣1️⃣ Model Evaluation
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix - Placement Prediction")
 plt.show()
 /*
 Program to implement the the Logistic Regression Model to Predict the Placement Status of Student.
-Developed by: 
-RegisterNumber:  
+Developed by: SRIRAM S
+RegisterNumber:  212225240155
 */
 ```
 
 ## Output:
-<img width="803" height="604" alt="image" src="https://github.com/user-attachments/assets/f75db7a7-5bc7-42d9-af88-dadaeaba5cb0" />
+Dataset Preview:
+   sl_no gender  ssc_p    ssc_b  hsc_p    hsc_b     hsc_s  degree_p  \
+0      1      M  67.00   Others  91.00   Others  Commerce     58.00   
+1      2      M  79.33  Central  78.33   Others   Science     77.48   
+2      3      M  65.00  Central  68.00  Central      Arts     64.00   
+3      4      M  56.00  Central  52.00  Central   Science     52.00   
+4      5      M  85.80  Central  73.60  Central  Commerce     73.30   
+
+    degree_t workex  etest_p specialisation  mba_p      status    salary  
+0   Sci&Tech     No     55.0         Mkt&HR  58.80      Placed  270000.0  
+1   Sci&Tech    Yes     86.5        Mkt&Fin  66.28      Placed  200000.0  
+2  Comm&Mgmt     No     75.0        Mkt&Fin  57.80      Placed  250000.0  
+3   Sci&Tech     No     66.0         Mkt&HR  59.43  Not Placed       NaN  
+4  Comm&Mgmt     No     96.8        Mkt&Fin  55.50      Placed  425000.0  
+
+After Encoding:
+   ssc_p  hsc_p  degree_p  etest_p  mba_p  gender_M  ssc_b_Others  \
+0  67.00  91.00     58.00     55.0  58.80         1             1   
+1  79.33  78.33     77.48     86.5  66.28         1             0   
+2  65.00  68.00     64.00     75.0  57.80         1             0   
+3  56.00  52.00     52.00     66.0  59.43         1             0   
+4  85.80  73.60     73.30     96.8  55.50         1             0   
+
+   hsc_b_Others  hsc_s_Commerce  hsc_s_Science  degree_t_Others  \
+0             1               1              0                0   
+1             1               0              1                0   
+2             0               0              0                0   
+3             0               0              1                0   
+4             0               1              0                0   
+
+   degree_t_Sci&Tech  workex_Yes  specialisation_Mkt&HR  
+0                  1           0                      1  
+1                  1           1                      0  
+2                  0           0                      0  
+3                  1           0                      1  
+4                  0           0                      0  
+
+Accuracy: 0.8837209302325582
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.82      0.75      0.78        12
+           1       0.91      0.94      0.92        31
+
+    accuracy                           0.88        43
+   macro avg       0.86      0.84      0.85        43
+weighted avg       0.88      0.88      0.88        43
+
+<img width="949" height="589" alt="image" src="https://github.com/user-attachments/assets/cd9b81c2-1eb5-462d-bb04-5105b62dbe18" />
+
 
 
 
